@@ -90,3 +90,21 @@ ax.hist(numAuthTriesPerIP, cumulative=True, density=True, bins=50, histtype='ste
 plt.xlabel('Number of Login Attempts')
 plt.ylabel('Percentage of Attackers')
 plt.show()
+reader = maxminddb.open_database('GeoLite2-City.mmdb')
+reader.get('8.8.8.8')
+def getCountryName(ip):
+    locationData = reader.get(ip)
+    
+    # In the cases where the IP address' location can't be determined, we return an empty string
+    if(locationData is None or 'country' not in locationData):
+        return ''
+    
+    return locationData['country']['names']['en']
+
+honeypotConnections = honeypotConnections.copy()
+honeypotConnections['country'] = honeypotConnections['src'].apply(lambda ip: getCountryName(IP))
+topNToDisplay = 5
+
+numConnectionsPerCountry = honeypotConnections['country'].value_counts()
+
+display(numConnectionsPerCountry.head(n = topNToDisplay))
